@@ -1,6 +1,14 @@
 import unittest
 
-from textnode import TextNode, TextType, split_nodes_delimiter
+from textnode import (
+    TextNode,
+    TextType,
+    split_nodes_delimiter,
+    extract_markdown_images,
+    extract_markdown_links,
+    split_nodes_images,
+    split_nodes_links,
+)
 from htmlnode import LeafNode
 
 
@@ -149,6 +157,212 @@ class TestSplitNodesDelimiter(unittest.TestCase):
             new_nodes,
             [
                 TextNode("bold *italic* bold", TextType.BOLD),
+            ],
+        )
+
+
+class TestExtractMarkdownImages(unittest.TestCase):
+    def test_find_0(self):
+        tuple_list = extract_markdown_images(
+            "This is a [Test Image](https://www.test.com/image)"
+        )
+        self.assertEqual(tuple_list, [])
+
+    def test_find_1(self):
+        tuple_list = extract_markdown_images(
+            "This is a ![Test Image](https://www.test.com/image)"
+        )
+        self.assertEqual(tuple_list, [("Test Image", "https://www.test.com/image")])
+
+    def test_find_2(self):
+        tuple_list = extract_markdown_images(
+            "This is a ![Test Image](https://www.test.com/image) and this is a ![Test Image 2](https://www.test.com/image2)"
+        )
+        self.assertEqual(
+            tuple_list,
+            [
+                ("Test Image", "https://www.test.com/image"),
+                ("Test Image 2", "https://www.test.com/image2"),
+            ],
+        )
+
+
+class TestExtractMarkdownLinks(unittest.TestCase):
+    def test_find_0(self):
+        tuple_list = extract_markdown_links(
+            "This is a ![Test Link](https://www.test.com/link)"
+        )
+        self.assertEqual(tuple_list, [])
+
+    def test_find_1(self):
+        tuple_list = extract_markdown_links(
+            "This is a [Test Link](https://www.test.com/link)"
+        )
+        self.assertEqual(tuple_list, [("Test Link", "https://www.test.com/link")])
+
+    def test_find_2(self):
+        tuple_list = extract_markdown_links(
+            "This is a [Test Link](https://www.test.com/link) and this is a [Test Link 2](https://www.test.com/link2)"
+        )
+        self.assertEqual(
+            tuple_list,
+            [
+                ("Test Link", "https://www.test.com/link"),
+                ("Test Link 2", "https://www.test.com/link2"),
+            ],
+        )
+
+
+class TestSplitNodesImages(unittest.TestCase):
+    def test_no_image(self):
+        node = TextNode(
+            "This is a False Test Image https://www.test.com/image between words.",
+            TextType.TEXT,
+        )
+        self.assertEqual(
+            split_nodes_images([node]),
+            [
+                TextNode(
+                    "This is a False Test Image https://www.test.com/image between words.",
+                    TextType.TEXT,
+                ),
+            ],
+        )
+
+    def test_text_sandwich(self):
+        node = TextNode(
+            "This is a ![Test Image](https://www.test.com/image) between words.",
+            TextType.TEXT,
+        )
+        self.assertEqual(
+            split_nodes_images([node]),
+            [
+                TextNode("This is a ", TextType.TEXT),
+                TextNode("Test Image", TextType.IMAGE, "https://www.test.com/image"),
+                TextNode(" between words.", TextType.TEXT),
+            ],
+        )
+
+    def test_image_1(self):
+        node = TextNode(
+            "This is a ![Test Image](https://www.test.com/image)",
+            TextType.TEXT,
+        )
+        self.assertEqual(
+            split_nodes_images([node]),
+            [
+                TextNode("This is a ", TextType.TEXT),
+                TextNode("Test Image", TextType.IMAGE, "https://www.test.com/image"),
+            ],
+        )
+
+    def test_image_2(self):
+        node = TextNode(
+            "This is a ![Test Image](https://www.test.com/image) and this is a ![Test Image 2](https://www.test.com/image2)",
+            TextType.TEXT,
+        )
+        self.assertEqual(
+            split_nodes_images([node]),
+            [
+                TextNode("This is a ", TextType.TEXT),
+                TextNode("Test Image", TextType.IMAGE, "https://www.test.com/image"),
+                TextNode(" and this is a ", TextType.TEXT),
+                TextNode("Test Image 2", TextType.IMAGE, "https://www.test.com/image2"),
+            ],
+        )
+
+    def test_no_nodes(self):
+        self.assertEqual(split_nodes_links([]), [])
+
+    def test_multiple_nodes(self):
+        node = TextNode(
+            "This is a ![Test Image](https://www.test.com/image)",
+            TextType.TEXT,
+        )
+        self.assertEqual(
+            split_nodes_images([node, node]),
+            [
+                TextNode("This is a ", TextType.TEXT),
+                TextNode("Test Image", TextType.IMAGE, "https://www.test.com/image"),
+                TextNode("This is a ", TextType.TEXT),
+                TextNode("Test Image", TextType.IMAGE, "https://www.test.com/image"),
+            ],
+        )
+
+
+class TestSplitNodesLinks(unittest.TestCase):
+    def test_no_link(self):
+        node = TextNode(
+            "This is a False Test Link https://www.test.com/link between words.",
+            TextType.TEXT,
+        )
+        self.assertEqual(
+            split_nodes_links([node]),
+            [
+                TextNode(
+                    "This is a False Test Link https://www.test.com/link between words.",
+                    TextType.TEXT,
+                ),
+            ],
+        )
+
+    def test_text_sandwich(self):
+        node = TextNode(
+            "This is a [Test Link](https://www.test.com/link) between words.",
+            TextType.TEXT,
+        )
+        self.assertEqual(
+            split_nodes_links([node]),
+            [
+                TextNode("This is a ", TextType.TEXT),
+                TextNode("Test Link", TextType.LINK, "https://www.test.com/link"),
+                TextNode(" between words.", TextType.TEXT),
+            ],
+        )
+
+    def test_link_1(self):
+        node = TextNode(
+            "This is a [Test Link](https://www.test.com/link)",
+            TextType.TEXT,
+        )
+        self.assertEqual(
+            split_nodes_links([node]),
+            [
+                TextNode("This is a ", TextType.TEXT),
+                TextNode("Test Link", TextType.LINK, "https://www.test.com/link"),
+            ],
+        )
+
+    def test_link_2(self):
+        node = TextNode(
+            "This is a [Test Link](https://www.test.com/link) and this is a [Test Link 2](https://www.test.com/link2)",
+            TextType.TEXT,
+        )
+        self.assertEqual(
+            split_nodes_links([node]),
+            [
+                TextNode("This is a ", TextType.TEXT),
+                TextNode("Test Link", TextType.LINK, "https://www.test.com/link"),
+                TextNode(" and this is a ", TextType.TEXT),
+                TextNode("Test Link 2", TextType.LINK, "https://www.test.com/link2"),
+            ],
+        )
+
+    def test_no_nodes(self):
+        self.assertEqual(split_nodes_links([]), [])
+
+    def test_multiple_nodes(self):
+        node = TextNode(
+            "This is a [Test Link](https://www.test.com/link)",
+            TextType.TEXT,
+        )
+        self.assertEqual(
+            split_nodes_links([node, node]),
+            [
+                TextNode("This is a ", TextType.TEXT),
+                TextNode("Test Link", TextType.LINK, "https://www.test.com/link"),
+                TextNode("This is a ", TextType.TEXT),
+                TextNode("Test Link", TextType.LINK, "https://www.test.com/link"),
             ],
         )
 
