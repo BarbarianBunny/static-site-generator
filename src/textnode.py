@@ -139,37 +139,3 @@ def text_to_textnodes(text):
     node = TextNode(text, TextType.TEXT)
     nodes = node.extract_text_nodes()
     return nodes
-
-
-def markdown_to_text_blocks(markdown):
-    # Take full document
-    # Seperate out each block via single blank lines
-    # return list of text blocks stripped of trailing whitespace
-    blocks_regex = re.compile(r"(?:[^\n\s]+?.+\n?)+")
-    matched_blocks = blocks_regex.findall(markdown)
-    blocks = [block.strip() for block in matched_blocks]
-
-    return blocks
-
-    # new_nodes = []
-    # for old_node in old_nodes:
-    #     if old_node.text_type != TextType.TEXT:
-    #         new_nodes.append(old_node)
-    #         continue
-
-    #     link_tuples = extract_markdown_links(old_node.text)
-    #     old_text = old_node.text
-    #     for link in link_tuples:
-    #         split_on_link = old_text.split(f"[{link[0]}]({link[1]})")
-    #         if split_on_link == []:
-    #             continue
-    #         old_text = split_on_link[1]
-    #         if split_on_link[0] != "":
-    #             new_nodes.append(TextNode(split_on_link[0], TextType.TEXT))
-    #         new_nodes.append(TextNode(link[0], TextType.LINK, link[1]))
-
-    #     if old_text == "":
-    #         continue
-    #     new_nodes.append(TextNode(old_text, TextType.TEXT))
-
-    # return new_nodes
