@@ -9,6 +9,7 @@ from textnode import (
     split_nodes_images,
     split_nodes_links,
     text_to_textnodes,
+    markdown_to_text_blocks,
 )
 from htmlnode import LeafNode
 
@@ -441,6 +442,79 @@ class TestTextToTextNode(unittest.TestCase):
                 TextNode("Test", TextType.LINK, "Link"),
                 TextNode(" ", TextType.TEXT),
                 TextNode("Test", TextType.IMAGE, "Image"),
+            ],
+        )
+
+
+class TestMarkdownToTextBlocks(unittest.TestCase):
+    def test_no_text(self):
+        blocks = markdown_to_text_blocks("")
+        self.assertEqual(blocks, [])
+
+    def test_1_block(self):
+        blocks = markdown_to_text_blocks("Test")
+        self.assertEqual(blocks, ["Test"])
+
+    def test_removes_leading_whitespace(self):
+        blocks = markdown_to_text_blocks(" Test")
+        self.assertEqual(blocks, ["Test"])
+
+    def test_removes_trailing_whitespace(self):
+        blocks = markdown_to_text_blocks("Test ")
+        self.assertEqual(blocks, ["Test"])
+
+    def test_removes_whitespace(self):
+        blocks = markdown_to_text_blocks(" Test ")
+        self.assertEqual(blocks, ["Test"])
+
+    def test_removes_leading_newline(self):
+        blocks = markdown_to_text_blocks("\nTest")
+        self.assertEqual(blocks, ["Test"])
+
+    def test_removes_trailing_newline(self):
+        blocks = markdown_to_text_blocks("Test\n")
+        self.assertEqual(blocks, ["Test"])
+
+    def test_removes_surrounding_newlines(self):
+        blocks = markdown_to_text_blocks("\nTest\n")
+        self.assertEqual(blocks, ["Test"])
+
+    def test_2_blocks(self):
+        blocks = markdown_to_text_blocks("Test\n\nTest2")
+        self.assertEqual(blocks, ["Test", "Test2"])
+
+    def test_2_blocks_multiline(self):
+        blocks = markdown_to_text_blocks("Test\n\nTest2\nTest2")
+        self.assertEqual(blocks, ["Test", "Test2\nTest2"])
+
+    def test_2_blocks_multiline_whitespace(self):
+        blocks = markdown_to_text_blocks(
+            """Test
+                                         
+Test2
+Test2 
+"""
+        )
+        self.assertEqual(blocks, ["Test", "Test2\nTest2"])
+
+    def test_block_dev_example(self):
+        blocks = markdown_to_text_blocks(
+            """# This is a heading
+
+This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+
+* This is the first list item in a list block
+* This is a list item
+* This is another list item"""
+        )
+        self.assertEqual(
+            blocks,
+            [
+                "# This is a heading",
+                "This is a paragraph of text. It has some **bold** and *italic* words inside of it.",
+                """* This is the first list item in a list block
+* This is a list item
+* This is another list item""",
             ],
         )
 
