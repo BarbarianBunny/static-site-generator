@@ -8,6 +8,7 @@ from textnode import (
     extract_markdown_links,
     split_nodes_images,
     split_nodes_links,
+    text_to_textnodes,
 )
 from htmlnode import LeafNode
 
@@ -188,11 +189,9 @@ class TestExtractMarkdownImages(unittest.TestCase):
 
 
 class TestExtractMarkdownLinks(unittest.TestCase):
-    def test_find_0(self):
-        tuple_list = extract_markdown_links(
-            "This is a ![Test Link](https://www.test.com/link)"
-        )
-        self.assertEqual(tuple_list, [])
+    def test_link_only(self):
+        tuple_list = extract_markdown_links("[Test Link](https://www.test.com/link)")
+        self.assertEqual(tuple_list, [("Test Link", "https://www.test.com/link")])
 
     def test_find_1(self):
         tuple_list = extract_markdown_links(
@@ -363,6 +362,85 @@ class TestSplitNodesLinks(unittest.TestCase):
                 TextNode("Test Link", TextType.LINK, "https://www.test.com/link"),
                 TextNode("This is a ", TextType.TEXT),
                 TextNode("Test Link", TextType.LINK, "https://www.test.com/link"),
+            ],
+        )
+
+    def test_text_is_link(self):
+        node = TextNode("[Text](Link)", TextType.TEXT)
+        self.assertEqual(
+            split_nodes_links([node]), [TextNode("Text", TextType.LINK, "Link")]
+        )
+
+
+class TestTextToTextNode(unittest.TestCase):
+    def test_text(self):
+        nodes = text_to_textnodes("Test Text")
+        self.assertEqual(nodes, [TextNode("Test Text", TextType.TEXT)])
+
+    def test_images(self):
+        nodes = text_to_textnodes("![Test](Image)")
+        self.assertEqual(nodes, [TextNode("Test", TextType.IMAGE, "Image")])
+
+    def test_links(self):
+        nodes = text_to_textnodes("[Test](Link)")
+        self.assertEqual(nodes, [TextNode("Test", TextType.LINK, "Link")])
+
+    def test_code(self):
+        nodes = text_to_textnodes("Test `Code`")
+        self.assertEqual(
+            nodes, [TextNode("Test ", TextType.TEXT), TextNode("Code", TextType.CODE)]
+        )
+
+    def test_bold(self):
+        nodes = text_to_textnodes("Test **Bold**")
+        self.assertEqual(
+            nodes, [TextNode("Test ", TextType.TEXT), TextNode("Bold", TextType.BOLD)]
+        )
+
+    def test_italics(self):
+        nodes = text_to_textnodes("Test *Italic*")
+        self.assertEqual(
+            nodes,
+            [TextNode("Test ", TextType.TEXT), TextNode("Italic", TextType.ITALIC)],
+        )
+
+    def test_in_order(self):
+        nodes = text_to_textnodes(
+            "Test ![Test](Image) [Test](Link) `Code` **Bold** *Italic*"
+        )
+        self.assertEqual(
+            nodes,
+            [
+                TextNode("Test ", TextType.TEXT),
+                TextNode("Test", TextType.IMAGE, "Image"),
+                TextNode(" ", TextType.TEXT),
+                TextNode("Test", TextType.LINK, "Link"),
+                TextNode(" ", TextType.TEXT),
+                TextNode("Code", TextType.CODE),
+                TextNode(" ", TextType.TEXT),
+                TextNode("Bold", TextType.BOLD),
+                TextNode(" ", TextType.TEXT),
+                TextNode("Italic", TextType.ITALIC),
+            ],
+        )
+
+    def test_in_reverse_order(self):
+        nodes = text_to_textnodes(
+            "Test *Italic* **Bold** `Code` [Test](Link) ![Test](Image)"
+        )
+        self.assertEqual(
+            nodes,
+            [
+                TextNode("Test ", TextType.TEXT),
+                TextNode("Italic", TextType.ITALIC),
+                TextNode(" ", TextType.TEXT),
+                TextNode("Bold", TextType.BOLD),
+                TextNode(" ", TextType.TEXT),
+                TextNode("Code", TextType.CODE),
+                TextNode(" ", TextType.TEXT),
+                TextNode("Test", TextType.LINK, "Link"),
+                TextNode(" ", TextType.TEXT),
+                TextNode("Test", TextType.IMAGE, "Image"),
             ],
         )
 

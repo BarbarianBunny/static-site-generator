@@ -45,7 +45,11 @@ class TextNode:
 
     def extract_text_nodes(self):
         """Seperates TextNode's text into a list of categorized TextNodes according to Markdown."""
-        nodes = split_nodes_delimiter([self])
+        nodes = split_nodes_images([self])
+        nodes = split_nodes_links(nodes)
+        nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+        nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+        nodes = split_nodes_delimiter(nodes, "*", TextType.ITALIC)
         return nodes
 
 
@@ -85,7 +89,8 @@ def split_nodes_images(old_nodes):
             if split_on_image == []:
                 continue
             old_text = split_on_image[1]
-            new_nodes.append(TextNode(split_on_image[0], TextType.TEXT))
+            if split_on_image[0] != "":
+                new_nodes.append(TextNode(split_on_image[0], TextType.TEXT))
             new_nodes.append(TextNode(image[0], TextType.IMAGE, image[1]))
 
         if old_text == "":
@@ -109,7 +114,8 @@ def split_nodes_links(old_nodes):
             if split_on_link == []:
                 continue
             old_text = split_on_link[1]
-            new_nodes.append(TextNode(split_on_link[0], TextType.TEXT))
+            if split_on_link[0] != "":
+                new_nodes.append(TextNode(split_on_link[0], TextType.TEXT))
             new_nodes.append(TextNode(link[0], TextType.LINK, link[1]))
 
         if old_text == "":
@@ -125,5 +131,11 @@ def extract_markdown_images(text):
 
 
 def extract_markdown_links(text):
-    image_regex = re.compile(r"[^!]\[(.*?)\]\((.*?)\)")
+    image_regex = re.compile(r"\[(.*?)\]\((.*?)\)")
     return image_regex.findall(text)
+
+
+def text_to_textnodes(text):
+    node = TextNode(text, TextType.TEXT)
+    nodes = node.extract_text_nodes()
+    return nodes
