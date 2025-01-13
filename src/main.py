@@ -1,7 +1,8 @@
-from textnode import TextNode
+from static_to_public import static_to_public
+
 
 def main():
-    tmp_textnode = TextNode("text", "Text Node", "https://www.test.com")
-    print(tmp_textnode)
+    static_to_public()
+
 
 main()
