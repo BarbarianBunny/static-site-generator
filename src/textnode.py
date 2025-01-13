@@ -43,6 +43,10 @@ class TextNode:
                 )
         return LeafNode(str(self.text_type), self.text)
 
+    def to_html_nodes(self):
+        nodes = self.extract_text_nodes()
+        return [node.to_html_node() for node in nodes]
+
     def extract_text_nodes(self):
         """Seperates TextNode's text into a list of categorized TextNodes according to Markdown."""
         nodes = split_nodes_images([self])

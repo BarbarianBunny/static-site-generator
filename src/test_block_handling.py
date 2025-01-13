@@ -1,6 +1,8 @@
 import unittest
 
+from htmlnode import ParentNode, LeafNode
 from block_handling import (
+    BlockType,
     markdown_to_text_blocks,
     is_block_type_code,
     is_block_type_heading,
@@ -8,6 +10,12 @@ from block_handling import (
     is_block_type_quote,
     is_block_type_unordered_list,
     block_to_block_type,
+    paragraph_to_html_node,
+    heading_to_html_node,
+    code_to_html_node,
+    quote_to_html_node,
+    unordered_list_to_html_node,
+    ordered_list_to_html_node,
 )
 
 
@@ -82,6 +90,138 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
 * This is another list item""",
             ],
         )
+
+
+class TestParagraphToHTMLNode(unittest.TestCase):
+    def test_text(self):
+        text = "Test"
+        html_node = paragraph_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<p>Test</p>")
+
+    def test_bold(self):
+        text = "**Test**"
+        html_node = paragraph_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<p><b>Test</b></p>")
+
+
+class TestHeadingToHTMLNode(unittest.TestCase):
+    def test_text(self):
+        text = "# Test"
+        html_node = heading_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<h1>Test</h1>")
+
+    def test_2(self):
+        text = "## Test"
+        html_node = heading_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<h2>Test</h2>")
+
+    def test_3(self):
+        text = "### Test"
+        html_node = heading_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<h3>Test</h3>")
+
+    def test_4(self):
+        text = "#### Test"
+        html_node = heading_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<h4>Test</h4>")
+
+    def test_5(self):
+        text = "##### Test"
+        html_node = heading_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<h5>Test</h5>")
+
+    def test_6(self):
+        text = "###### Test"
+        html_node = heading_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<h6>Test</h6>")
+
+    def test_bold(self):
+        text = "# **Test**"
+        html_node = heading_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<h1><b>Test</b></h1>")
+
+
+class TestCodeToHTMLNode(unittest.TestCase):
+    def test_1(self):
+        text = "```Test```"
+        html_node = code_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<pre><code>Test</code></pre>")
+
+    def test_2(self):
+        text = "```Test\nTest```"
+        html_node = code_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<pre><code>Test\nTest</code></pre>")
+
+
+class TestQuoteToHTMLNode(unittest.TestCase):
+    def test_1(self):
+        text = "> Test"
+        html_node = quote_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<blockquote>Test</blockquote>")
+
+    def test_2(self):
+        text = "> Test\n> Test"
+        html_node = quote_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<blockquote>Test\nTest</blockquote>")
+
+    def test_1_no_space(self):
+        text = ">Test"
+        html_node = quote_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<blockquote>Test</blockquote>")
+
+    def test_2_no_space(self):
+        text = ">Test\n> Test"
+        html_node = quote_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<blockquote>Test\nTest</blockquote>")
+
+
+class TestUnorderedListToHTMLNode(unittest.TestCase):
+    def test_1_dash(self):
+        text = "- Test"
+        html_node = unordered_list_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<ul><li>Test</li></ul>")
+
+    def test_1_star(self):
+        text = "* Test"
+        html_node = unordered_list_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<ul><li>Test</li></ul>")
+
+    def test_2_dash(self):
+        text = "- Test\n- Test"
+        html_node = unordered_list_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<ul><li>Test</li><li>Test</li></ul>")
+
+
+class TestOrderedListToHTMLNode(unittest.TestCase):
+    def test_1_dash(self):
+        text = "1. Test"
+        html_node = ordered_list_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<ol><li>Test</li></ol>")
+
+    def test_2_dash(self):
+        text = "1. Test\n2. Test"
+        html_node = ordered_list_to_html_node(text)
+        html = html_node.to_html()
+        self.assertEqual(html, "<ol><li>Test</li><li>Test</li></ol>")
 
 
 class TestIsBlockTypeHeading(unittest.TestCase):
@@ -248,32 +388,32 @@ class TestBlockToBlockType(unittest.TestCase):
     def test_paragraph(self):
         text = "Test"
         result = block_to_block_type(text)
-        self.assertEqual(result, "paragraph")
+        self.assertEqual(result, BlockType.PARAGRAPH)
 
     def test_heading(self):
         text = "# Test"
         result = block_to_block_type(text)
-        self.assertEqual(result, "heading")
+        self.assertEqual(result, BlockType.HEADING)
 
     def test_code(self):
         text = "```Test\nTest```"
         result = block_to_block_type(text)
-        self.assertEqual(result, "code")
+        self.assertEqual(result, BlockType.CODE)
 
     def test_quote(self):
         text = "> Test\n> Test"
         result = block_to_block_type(text)
-        self.assertEqual(result, "quote")
+        self.assertEqual(result, BlockType.QUOTE)
 
     def test_unordered_list(self):
         text = "* Test"
         result = block_to_block_type(text)
-        self.assertEqual(result, "unordered_list")
+        self.assertEqual(result, BlockType.UNORDERED_LIST)
 
     def test_ordered_list(self):
         text = "1. Test\n2. Test"
         result = block_to_block_type(text)
-        self.assertEqual(result, "ordered_list")
+        self.assertEqual(result, BlockType.ORDERED_LIST)
 
 
 if __name__ == "__main__":
