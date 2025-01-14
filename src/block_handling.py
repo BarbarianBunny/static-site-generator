@@ -17,9 +17,10 @@ class BlockType(Enum):
 
 
 def markdown_to_text_blocks(markdown):
-    blocks_regex = re.compile(r"(?:[^\n\s]+?.+\n?)+")
-    matched_blocks = blocks_regex.findall(markdown)
-    blocks = [block.strip() for block in matched_blocks]
+    blocks_regex = re.compile(r"(?m)^\s*$")
+    matched_blocks = re.split(blocks_regex, markdown)
+    full_blocks = filter(lambda x: x != "", matched_blocks)
+    blocks = [block.strip() for block in full_blocks]
     return blocks
 
 

@@ -70,6 +70,28 @@ Test2
         )
         self.assertEqual(blocks, ["Test", "Test2\nTest2"])
 
+    def test_block_code(self):
+        blocks = markdown_to_text_blocks(
+            """Here's what `elflang` looks like (the perfect coding language):
+
+```
+func main(){
+    fmt.Println("Hello, World!")
+}
+```"""
+        )
+        self.assertEqual(
+            blocks,
+            [
+                "Here's what `elflang` looks like (the perfect coding language):",
+                """```
+func main(){
+    fmt.Println("Hello, World!")
+}
+```""",
+            ],
+        )
+
     def test_block_dev_example(self):
         blocks = markdown_to_text_blocks(
             """# This is a heading
@@ -291,6 +313,15 @@ class TestIsBlockTypeCode(unittest.TestCase):
         text = "``Test``"
         result = is_block_type_code(text)
         self.assertEqual(result, False)
+
+    def test_multiline(self):
+        text = """```
+func main(){
+    fmt.Println("Hello, World!")
+}
+```"""
+        result = is_block_type_code(text)
+        self.assertEqual(result, True)
 
 
 class TestIsBlockTypeQuote(unittest.TestCase):
